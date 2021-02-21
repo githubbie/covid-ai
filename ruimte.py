@@ -14,6 +14,11 @@ class Ruimte:
     def reset(self):
         self.besmettelijkheid = 0
 
+    def reset_alles(self):
+        self.beta = 0
+        self.mondkapjes = False 
+        self.besmettelijkheid = 0   
+
     # bezoek van mensen aan een ruimte beinvloed de hoeveelheid
     # besmettelijkheid van de ruimte
     def bezoek(self, mensen):

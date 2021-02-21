@@ -27,6 +27,23 @@ class Groep:
         self.nieuwe_asym_zieken = 0
         self.herstelde_zieken = 0
         self.herstelde_asym_zieken = 0
+    
+    def reset_alles(self):
+        # huidige toestand
+        self.onbesmet = 0
+        self.besmet = 0
+        self.ziek = 0
+        self.asym_ziek = 0
+        self.immuun = 0
+        self.blijheid = 0
+        self.mondkapje = False
+
+        # meest recente veranderingen
+        self.nieuwe_besmettingen = 0
+        self.nieuwe_zieken = 0
+        self.nieuwe_asym_zieken = 0
+        self.herstelde_zieken = 0
+        self.herstelde_asym_zieken = 0
 
     # Tijdens de nacht worden mensen ziek of weer beter
     def nacht(self):

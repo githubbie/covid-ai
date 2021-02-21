@@ -4,30 +4,38 @@ from rooster import *
 from toeschouwer import *
 
 class Log():
-    def __init__(self, filenaam, modulo = 1):
-        self.file = open(filenaam, 'w')
+    def __init__(self, filenaam = '', modulo = 1):
+        if filenaam == '':
+            self.file = None
+        else:
+            self.file = open(filenaam, 'w')
         self.namen = "dag blijheid onbesmet besmet ziek asym_ziek immuun mk_plicht R".split()
         self.formats = "{:11d} {:11.2f} {:11.2f} {:11.2f} {:11.2f} {:11.2f} {:11.2f} {:11d} {:11.2f}".split()
         self.modulo = modulo
         self.iteratie = 0
     
     def start(self):
-        self.file.write(",".join(self.namen))
-        self.file.write("\n")
-        print("|"+"|".join(["{:^11s}".format(naam) for naam in self.namen])+"|")
-        print("+"+"+".join(["-"*11 for _ in self.namen])+"+")
+        if self.file:
+            self.file.write(",".join(self.namen))
+            self.file.write("\n")
+        if self.modulo > 0:
+            print("|"+"|".join(["{:^11s}".format(naam) for naam in self.namen])+"|")
+            print("+"+"+".join(["-"*11 for _ in self.namen])+"+")
 
     def regel(self, *waardes):
-        self.file.write(",".join(str(waarde) for waarde in waardes))
-        self.file.write("\n")
-        if self.iteratie % self.modulo == 0:
+        if self.file:
+            self.file.write(",".join(str(waarde) for waarde in waardes))
+            self.file.write("\n")
+        if self.modulo > 0 and self.iteratie % self.modulo == 0:
             print("|"+"|".join([format.format(waarde) for format, waarde in zip(self.formats, waardes)])+"|")
         self.iteratie += 1
 
     def einde(self):
-        self.file.close()
-        print("+"+"+".join(["-"*11 for _ in self.namen])+"+")
-        print("|"+"|".join(["{:^11s}".format(naam) for naam in self.namen])+"|")
+        if self.file:
+            self.file.close()
+        if self.modulo > 0:
+            print("+"+"+".join(["-"*11 for _ in self.namen])+"+")
+            print("|"+"|".join(["{:^11s}".format(naam) for naam in self.namen])+"|")
 
 class Model():
     def __init__(self, ziekte, effecten):
@@ -63,26 +71,25 @@ class Model():
         self.routes = bereken_routes(self.ruimtes)
         printer = Printer()
         tabel = TabelMaker()
-        self.toeschouwer = Keten(tabel)
-        self.toeschouwer.volg(*(self.ruimtes))
-        self.toeschouwer.volg(*(self.groepen))
-        if modulo > 0:
-            self.log = Log(filenaam, modulo)
-            self.log.start()
-        else:
-            self.log = None
+        #self.toeschouwer = Keten(tabel)
+        #self.toeschouwer.volg(*(self.ruimtes))
+        #self.toeschouwer.volg(*(self.groepen))
+        self.toeschouwer = Toeschouwer()
+        self.log = Log(filenaam, modulo)
+        self.log.start()
+
+    def simulatie_stap(self, nummer):
+        totaal, mk_plicht = self.dag(nummer)
+        self.log.regel(nummer, totaal.blijheid, totaal.onbesmet, totaal.besmet, totaal.ziek, totaal.asym_ziek, totaal.immuun, mk_plicht, totaal.R())
+        self.nacht(nummer)
 
     def simulatie(self, aantal_dagen, neem_mondkapjes_besluit):
         for nummer in range(aantal_dagen):
-            totaal, mk_plicht = self.dag(nummer)
-            if self.log:
-                self.log.regel(nummer, totaal.blijheid, totaal.onbesmet, totaal.besmet, totaal.ziek, totaal.asym_ziek, totaal.immuun, mk_plicht, totaal.R())
-            self.nacht(nummer)
+            self.simulatie_stap(nummer)
             neem_mondkapjes_besluit(self)
 
     def einde(self, filenaam):
-        if self.log:
-            self.log.einde()
+        self.log.einde()
         self.toeschouwer.afronden(filenaam)
 
     def totaal(self):
@@ -91,13 +98,19 @@ class Model():
            combinatie_groep.som(groep)
         return combinatie_groep
 
+    def reset_alles(self):
+        for ruimte in self.ruimtes:
+            ruimte.reset_alles()
+        for groep in self.groepen:
+            groep.reset_alles()
+
 class LangeGangSchool(Model):
     def __init__(self, ziekte, effecten, aantal_gangen, aantal_klassen):
         super().__init__(ziekte, effecten)
-        self.lokalen = [Ruimte("L%d" % n, ziekte, 0.1) for n in range(aantal_gangen*2)]
-        self.gangen = [Ruimte("G%d" % n, ziekte, 0.1) for n in range(aantal_gangen)]
-        self.voorhal = Ruimte("VH", ziekte, 0.1)
-        self.docenten_kamer = Ruimte("DK", ziekte, 0.1)
+        self.lokalen = [Ruimte("L%d" % n, ziekte, 0.0) for n in range(aantal_gangen*2)]
+        self.gangen = [Ruimte("G%d" % n, ziekte, 0.0) for n in range(aantal_gangen)]
+        self.voorhal = Ruimte("VH", ziekte, 0.0)
+        self.docenten_kamer = Ruimte("DK", ziekte, 0.0)
 
         for n in range(aantal_gangen):
             self.lokalen[2*n].voeg_buren_toe({ self.gangen[n]: 1 })
@@ -120,6 +133,10 @@ class LangeGangSchool(Model):
 
         self.totale_zieken = 0.0
 
+    def reset_alles(self):
+        super().reset_alles()
+        self.totale_zieken = 0
+        
     def dag(self, nummer):
         schooldag(self.klassen, self.docenten, self.lokalen, self.gangen, self.voorhal, self.docenten_kamer, self.routes, nummer, self.toeschouwer)
         for groep in self.groepen:

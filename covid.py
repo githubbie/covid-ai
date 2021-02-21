@@ -44,4 +44,4 @@ class Welbevinden():
         self.ziekte_boete = ziekte_boete
 
 covid19 = Ziekte(0.8, 0.0001, 0.1, 0.1, 0.2, 0.5, 0.8)
-effecten = Welbevinden(0.1/(24*60), 0.01, 10.0)
+effecten = Welbevinden(0.1/(24*60), 0.01, 5.0)
