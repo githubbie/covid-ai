@@ -1,7 +1,9 @@
 .venv/
+.vscode/
 .pyc
 *~
 __pycache__/
 ~$*
 *.csv
 *.xlsx
+covid.code-workspace
