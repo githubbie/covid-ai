@@ -1,4 +1,3 @@
-from toeschouwer import *
 import random
 
 # ken elke groep uit groepen een willekeurig lokaal uit lokalen
@@ -68,7 +67,14 @@ def pauze(lokaties, pauze_lokaties, routes, stap_tijd, pauze_tijd, toeschouwer):
     bezoek(lokaties, pauze_tijd)
 
 def schooldag(klassen, docenten, lokalen, gangen, voorhal, docenten_kamer, routes, 
-              dag, toeschouwer = Toeschouwer()):
+              dag, toeschouwer = None):
+    if toeschouwer:
+        def log(omschrijving, waardes):
+            toeschouwer.actie(omschrijving, waardes)
+    else:
+        def log(omschrijving, waardes):
+            pass
+
     # alle klassen beginnen in voorhal, alle docenten in docenten_kamer
     pauze_lokaties = {}
     verzamel(pauze_lokaties, klassen, voorhal)
@@ -79,44 +85,44 @@ def schooldag(klassen, docenten, lokalen, gangen, voorhal, docenten_kamer, route
 
     # start de dag
     reset(*lokalen, *gangen, voorhal, docenten_kamer)
-    toeschouwer.actie("+ start dag %d" % dag, {})
+    log("+ start dag %d" % dag, {})
     begin(pauze_lokaties)
     bezoek(pauze_lokaties, 5.0)
-    toeschouwer.actie("+- begin %d" % dag, pauze_lokaties)
+    log("+- begin %d" % dag, pauze_lokaties)
     lokaties = pauze_lokaties.copy()
 
     # 1e blok van 2 lessen
     for n in [1, 2]:
         reset(*lokalen, *gangen, voorhal, docenten_kamer)
         les(lokaties, docenten_rooster, klassen, lokalen, routes, 0.5, 50, toeschouwer)
-        toeschouwer.actie("+- les %d.%d" % (dag, n), lokaties)
+        log("+- les %d.%d" % (dag, n), lokaties)
 
     # kleine pauze
     reset(*lokalen, *gangen, voorhal, docenten_kamer)
     pauze(lokaties, pauze_lokaties, routes, 0.5, 20, toeschouwer)
-    toeschouwer.actie("+- kl pauze %d" % dag, lokaties)
+    log("+- kl pauze %d" % dag, lokaties)
 
     # 2e blok van 3 lessen
     for n in [3, 4, 5]:
         reset(*lokalen, *gangen, voorhal, docenten_kamer)
         les(lokaties, docenten_rooster, klassen, lokalen, routes, 0.5, 50, toeschouwer)
-        toeschouwer.actie("+- les %d.%d" % (dag, n), lokaties)
+        log("+- les %d.%d" % (dag, n), lokaties)
 
     # grote pauze
     reset(*lokalen, *gangen, voorhal, docenten_kamer)
     pauze(lokaties, pauze_lokaties, routes, 0.5, 30, toeschouwer)
-    toeschouwer.actie("+- gr pauze %d" % dag, lokaties)
+    log("+- gr pauze %d" % dag, lokaties)
 
     # 3e blok van 2 lessen
     for n in [6, 7]:
         reset(*lokalen, *gangen, voorhal, docenten_kamer)
         les(lokaties, docenten_rooster, klassen, lokalen, routes, 0.5, 50, toeschouwer)
-        toeschouwer.actie("+- les %d.%d" % (dag, n), lokaties)
+        log("+- les %d.%d" % (dag, n), lokaties)
 
     reset(*lokalen, *gangen, voorhal, docenten_kamer)
     pauze(lokaties, pauze_lokaties, routes, 0.5, 1, toeschouwer)
-    toeschouwer.actie("+- einde %d" % dag, lokaties)
+    log("+- einde %d" % dag, lokaties)
 
     # einde van de dag
     reset(*lokalen, *gangen, voorhal, docenten_kamer)
-    toeschouwer.actie("+ einde dag %d" % dag, {})
+    log("+ einde dag %d" % dag, {})

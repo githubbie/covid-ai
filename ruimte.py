@@ -1,10 +1,10 @@
-import covid
-
 class Ruimte:
-    # naam
+    # naam: de naam van de ruimte
+    # ziekte: de parameters van de ziekte
     # beta [%]: besmettelijkheid van de ruimte
-    def __init__(self, naam, beta):
+    def __init__(self, naam, ziekte, beta):
         self.naam = naam
+        self.ziekte = ziekte
         self.beta = beta
         self.mondkapjes = False
         self.buren = {}
@@ -18,13 +18,23 @@ class Ruimte:
     # besmettelijkheid van de ruimte
     def bezoek(self, mensen):
         if self.mondkapjes:
-            self.besmettelijkheid += (1.0 - covid.epsilon_uit) * mensen.asym_ziek
+            self.besmettelijkheid += (1.0 - self.ziekte.epsilon_uit) * mensen.asym_ziek
         else:
             self.besmettelijkheid += mensen.asym_ziek
+        self.besmettelijkheid *= self.beta
 
     # buren [ruimte -> afstand]: verbindingen met andere ruimtes
     def voeg_buren_toe(self, buren):
         self.buren.update(buren)
+
+    def mondkapjes_plicht(self, ja_nee):
+        self.mondkapjes = ja_nee
+
+class Omgeving():
+    def __init__(self, besmettelijkheid):
+        self.naam = "omgeving"
+        self.besmettelijkheid = besmettelijkheid
+        self.mondkapjes = False
 
 ONBEREIKBAAR = 1e10
 

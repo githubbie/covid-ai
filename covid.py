@@ -1,36 +1,47 @@
-# beta: besmettelijkheid [%]
-#   kans dat een onbesmet iemand besmet wordt door een besmettelijke persoon als ze contact hebben
-beta = 0.0001
+class Ziekte():
+    def __init__(self, alpha, beta, gamma_sym_ziek, gamma_asym_ziek, sigma, epsilon_in, epsilon_uit):
+        # beta: besmettelijkheid [%]
+        #   kans dat een onbesmet iemand besmet wordt door een besmettelijke persoon als ze contact hebben
+        self.beta = beta
 
-# sigma: incubatie tijd [dagen]
-#   aantal dagen voor een besmet persoon of ziek wordt, of niet ziek blijft
-#
-sigma = 0.2
+        # sigma: incubatie tijd [%]
+        #   kans dat een besmet persoon ziek wordt, of nog besmet blijft
+        #   omgekeerd evenredig met het aantal dagen voor een besmet persoon of ziek wordt
+        #
+        self.sigma = sigma
 
-# alpha: kans op ziekte [%]
-#   percentage besmette personen dat ziek wordt na de incubatie tijd
-alpha = 0.8
+        # alpha: kans op ziekte [%]
+        #   percentage besmette personen dat ziek wordt na de incubatie tijd
+        self.alpha = alpha
 
-# gammasym_ziek: herstelkans [%]
-#   percentage zieke mensen dat hersteld en daarna immuun wordt (en niet meer besmettelijk is)
-gammasym_ziek = 0.1
+        # gammasym_ziek: herstelkans [%]
+        #   percentage zieke mensen dat hersteld en daarna immuun wordt (en niet meer besmettelijk is)
+        self.gamma_sym_ziek = gamma_sym_ziek
 
-# gamma_asym_ziek: immuniteitskans [%]
-#   percentage asym_zieke mensen dat immuun wordt (en niet meer besmettelijk is)
-gamma_asym_ziek = 0.1
+        # gamma_asym_ziek: immuniteitskans [%]
+        #   percentage asym_zieke mensen dat immuun wordt (en niet meer besmettelijk is)
+        self.gamma_asym_ziek = gamma_asym_ziek
 
-# epsilon_in: effectiviteit maskers [%]
-#   percentage demping dat masker biedt voor besmettelijkheid uit de omgeving
-epsilon_in = 0.5
+        # epsilon_in: effectiviteit maskers [%]
+        #   percentage demping dat masker biedt voor besmettelijkheid uit de omgeving
+        self.epsilon_in = epsilon_in
 
-# epsilon_uit: effectiviteit makers [%]
-#   percentage demping dat masker biedt voor het overdragen van besmettelijkheid naar de omgeving
-epsilon_uit = 0.8
+        # epsilon_uit: effectiviteit makers [%]
+        #   percentage demping dat masker biedt voor het overdragen van besmettelijkheid naar de omgeving
+        self.epsilon_uit = epsilon_uit
 
-# mondkapjes_boete: effect op de blijheid van het dragen van een mondkapje
-#   hoeveel blijheid het kost als iemand een mondkapje op moet
-mondkapjes_boete = 0.01
+class Welbevinden():
+    def __init__(self, mondkapjes_tijd_boete, mondkapjes_keer_boete, ziekte_boete):
+        # mondkapjes_boete: effect op de blijheid van het dragen van een mondkapje [/min]
+        #   hoeveel blijheid het kost als iemand een mondkapje op moet
+        self.mondkapjes_tijd_boete = mondkapjes_tijd_boete
 
-# ziekte_boete: effect op de blijheid van ziek worden
-#   hoeveel blijheid het kost als iemand ziek wordt
-ziekte_boete = 100.0
+        # mondkapjes_opzet_boete: effect op de blijheid van het opzetten van een mondkapje [/#]
+        self.mondkapjes_keer_boete = mondkapjes_keer_boete
+
+        # ziekte_boete: effect op de blijheid van ziek worden [/#]
+        #   hoeveel blijheid het kost als iemand ziek wordt
+        self.ziekte_boete = ziekte_boete
+
+covid19 = Ziekte(0.8, 0.0001, 0.1, 0.1, 0.2, 0.5, 0.8)
+effecten = Welbevinden(0.1/(24*60), 0.01, 10.0)
