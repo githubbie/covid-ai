@@ -120,7 +120,9 @@ class TabelMaker(Printer):
         self.tabel.append(regel)
 
     def afronden(self, file = None):
-        if file == None:
+        if file == '':
+            return
+        elif file == None:
             file = '/dev/tty'
         with open(file, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
