@@ -4,9 +4,9 @@ def op_af(ruimtes, op_waarde, af_waarde):
     def besluit(model):
         for ruimte in ruimtes:
             if ruimte.mondkapjes:
-                ruimte.mondkapjes_plicht(model.totaal().ziek >= af_waarde)
+                ruimte.mondkapjes_plicht(model.totaal.ziek >= af_waarde)
             else:
-                ruimte.mondkapjes_plicht(model.totaal().ziek >= op_waarde)
+                ruimte.mondkapjes_plicht(model.totaal.ziek >= op_waarde)
     
     return besluit
 
@@ -15,7 +15,7 @@ def op_af2(ruimtes, op_waarde, af_waarde):
         if len(_toestand) == 0:
             _toestand = [0]
         toestand = _toestand[0]
-        ziek = model.totaal().ziek
+        ziek = model.totaal.ziek
         if toestand == 0:
             for ruimte in ruimtes:
                 ruimte.mondkapjes_plicht(ziek >= op_waarde)

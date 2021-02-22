@@ -5,5 +5,7 @@
 __pycache__/
 ~$*
 *.csv
+*.log
+*.swp
 *.xlsx
 covid.code-workspace

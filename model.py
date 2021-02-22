@@ -79,8 +79,17 @@ class Model():
         self.log.start()
 
     def simulatie_stap(self, nummer):
-        totaal, mk_plicht = self.dag(nummer)
-        self.log.regel(nummer, totaal.blijheid, totaal.onbesmet, totaal.besmet, totaal.ziek, totaal.asym_ziek, totaal.immuun, mk_plicht, totaal.R())
+        self.dag(nummer)
+        mk_plicht = sum([1 for r in self.ruimtes if r.mondkapjes])
+        self.log.regel(nummer, 
+                       self.totaal.blijheid, 
+                       self.totaal.onbesmet, 
+                       self.totaal.besmet, 
+                       self.totaal.ziek, 
+                       self.totaal.asym_ziek, 
+                       self.totaal.immuun, 
+                       mk_plicht, 
+                       self.totaal.R())
         self.nacht(nummer)
 
     def simulatie(self, aantal_dagen, neem_mondkapjes_besluit):
@@ -92,7 +101,7 @@ class Model():
         self.log.einde()
         self.toeschouwer.afronden(filenaam)
 
-    def totaal(self):
+    def _totaal(self):
         combinatie_groep = Groep("totaal:", self.ziekte, self.effecten, 0, 0, 0, 0, 0)
         for groep in self.groepen:
            combinatie_groep.som(groep)
@@ -103,6 +112,7 @@ class Model():
             ruimte.reset_alles()
         for groep in self.groepen:
             groep.reset_alles()
+        self.totaal = self._totaal()
 
 class LangeGangSchool(Model):
     def __init__(self, ziekte, effecten, aantal_gangen, aantal_klassen):
@@ -135,21 +145,20 @@ class LangeGangSchool(Model):
 
     def reset_alles(self):
         super().reset_alles()
-        self.totale_zieken = 0
+        self.totale_zieken = 0.0
         
     def dag(self, nummer):
         schooldag(self.klassen, self.docenten, self.lokalen, self.gangen, self.voorhal, self.docenten_kamer, self.routes, nummer, self.toeschouwer)
         for groep in self.groepen:
             groep.verwerk_buiten_school(self.omgeving)
-        totaal = self.totaal()
-        self.totale_zieken += totaal.nieuwe_zieken
-        mk_plicht = sum([1 for r in self.ruimtes if r.mondkapjes])
-        return totaal, mk_plicht
+        self.totaal = self._totaal()
 
     def nacht(self, nummer):
         for groep in self.groepen:
             groep.nacht()
+        self.totaal = self._totaal()
+        self.totale_zieken += self.totaal.nieuwe_zieken
 
     def einde(self, filenaam):
         super().einde(filenaam)
-        return self.totale_zieken, self.totaal().blijheid
+        return self.totale_zieken, self.totaal.blijheid
