@@ -7,7 +7,7 @@ def argmax(l):
     return max(range(len(l)), key=f)
 
 class QLearning():
-    def __init__(self, model, model_reset, max_dag_nummer, Qs):
+    def __init__(self, model, model_reset, besluit_boete, model_simulatie_stappen, max_dag_nummer, Qs):
         self.model = model
         self.model_reset = model_reset
         self.dag_nummer = 0
@@ -15,6 +15,8 @@ class QLearning():
         self.Q_alpha = Qs[0]
         self.Q_gamma = Qs[1]
         self.Q_epsilon = Qs[2]
+        self.besluit_boete = besluit_boete
+        self.model_simulatie_stappen = model_simulatie_stappen
         self.max_dag_nummer = max_dag_nummer
         self.done = False
         self.aantal_acties = self._aantal_acties()
@@ -22,8 +24,8 @@ class QLearning():
     def codeer_toestand(self):
         N=5
         return tuple([self.dag_nummer, 
-                      round(self.model.totaal.ziek/N), 
-                      round((self.model.totale_zieken - self.model.totaal.ziek)/N),
+                      N*round(self.model.totaal.ziek/N), 
+                      N*round((self.model.totale_zieken - self.model.totaal.ziek)/N),
                       self.model.voorhal.mondkapjes,
                       self.model.docenten_kamer.mondkapjes,
                       self.model.lokalen[0].mondkapjes,
@@ -47,10 +49,11 @@ class QLearning():
     def doe_actie(self, actie_nummer):
         if actie_nummer == 0:
             begin_blijheid = self.model.totaal.blijheid
-            self.dag_nummer += 1
-            self.model.simulatie_stap(self.dag_nummer)
-            if self.dag_nummer == self.max_dag_nummer:
-                self.done = True
+            for _ in range(self.model_simulatie_stappen):
+                self.dag_nummer += 1
+                self.model.simulatie_stap(self.dag_nummer)
+                if self.dag_nummer == self.max_dag_nummer:
+                    self.done = True
             return self.model.totaal.blijheid - begin_blijheid
 
         if actie_nummer == 1:
@@ -64,7 +67,7 @@ class QLearning():
             for gang in self.model.gangen:
                 gang.mondkapjes_plicht(not(gang.mondkapjes))
             #self.model.gangen[actie_nummer-4].mondkapjes_plicht(not(self.model.gangen[actie_nummer-4].mondkapjes))
-        return -1
+        return self.besluit_boete
 
     def lees_Q_tabel(self, toestand):
         if not(toestand in self._q_tabel):
