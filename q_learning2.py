@@ -23,67 +23,45 @@ class QLearning():
 
     def codeer_toestand(self):
         N=5
-        return tuple([self.dag_nummer, 
-                      N*round(self.model.totaal.ziek/N), 
+        return tuple([N*round(self.model.totaal.ziek/N), 
                       N*round((self.model.totale_zieken - self.model.totaal.ziek)/N),
                       self.model.voorhal.mondkapjes,
                       self.model.docenten_kamer.mondkapjes,
                       self.model.lokalen[0].mondkapjes,
                       self.model.gangen[0].mondkapjes])
-        return tuple([self.dag_nummer, 
-                      round(self.model.totaal.ziek), 
-                      round(self.model.totale_zieken - self.model.totaal.ziek),
-                      self.model.voorhal.mondkapjes,
-                      self.model.docenten_kamer.mondkapjes,
-                      self.model.lokalen[0].mondkapjes] + \
-                      [gang.mondkapjes for gang in self.model.gangen])
 
     def _aantal_acties(self):
-        # 0 = simulatie_dag
-        # 1 = verander voorhal mondkapjesplicht
-        # 2 = verander docenten_kamer mondkapjesplicht
-        # 3 = verander lokalen mondkapjesplicht
-        # 4..4+N = verander gang N mondkapjesplicht
-        return 4 + 1 # len(self.model.gangen)
+        return 2**4 # len(self.model.gangen)
 
     def doe_actie(self, actie_nummer):
-        if actie_nummer == 0:
-            begin_blijheid = self.model.totaal.blijheid
-            for _ in range(self.model_simulatie_stappen):
-                self.dag_nummer += 1
-                self.model.simulatie_stap(self.dag_nummer)
-                if self.dag_nummer == self.max_dag_nummer:
-                    self.done = True
-            return self.model.totaal.blijheid - begin_blijheid
-
-        if actie_nummer == 1:
+        if actie_nummer & 1 == 1:
             self.model.voorhal.mondkapjes_plicht(not(self.model.voorhal.mondkapjes))
-        elif actie_nummer == 2:
+        if actie_nummer & 2 == 2:
             self.model.docenten_kamer.mondkapjes_plicht(not(self.model.docenten_kamer.mondkapjes))
-        elif actie_nummer == 3:
+        if actie_nummer & 4 == 4:
             for lokaal in self.model.lokalen:
                 lokaal.mondkapjes_plicht(not(lokaal.mondkapjes))
-        else:
+        if actie_nummer & 8 == 8:
             for gang in self.model.gangen:
                 gang.mondkapjes_plicht(not(gang.mondkapjes))
-            #self.model.gangen[actie_nummer-4].mondkapjes_plicht(not(self.model.gangen[actie_nummer-4].mondkapjes))
-        return self.besluit_boete
+
+        begin_blijheid = self.model.totaal.blijheid
+        for _ in range(self.model_simulatie_stappen):
+            self.dag_nummer += 1
+            self.model.simulatie_stap(self.dag_nummer)
+            if self.dag_nummer == self.max_dag_nummer:
+                self.done = True
+        return self.model.totaal.blijheid - begin_blijheid
 
     def lees_Q_tabel(self, toestand):
         if not(toestand in self._q_tabel):
-            self._q_tabel[toestand] = [0] + [self.besluit_boete]*(self.aantal_acties-1)
+            self._q_tabel[toestand] = [0] + [-10]*(self.aantal_acties-1)
         return self._q_tabel[toestand]
     
     def werk_Q_tabel_bij(self, toestand, actie, volgende_toestand, beloning):
         volgende_max = max(self.lees_Q_tabel(volgende_toestand))
         nieuwe_waarde = (1-self.Q_alpha)*self.lees_Q_tabel(toestand)[actie] + self.Q_alpha*(beloning + self.Q_gamma * volgende_max)
         self._q_tabel[toestand][actie] = nieuwe_waarde
-
-    def train_kies_actie(self):
-        if uniform(0,1) < self.Q_epsilon:
-            actie = randrange(self.aantal_acties)
-        else:
-            actie = argmax(self.lees_Q_tabel(begin_toestand))
 
     def train_episode(self):
         self.model_reset(self.model)
@@ -93,7 +71,13 @@ class QLearning():
         actie_log = []
         while not self.done:
             begin_toestand = self.codeer_toestand()
-            actie = self.train_kies_actie()
+            if uniform(0,1) < self.Q_epsilon:
+                actie = randrange(self.aantal_acties)
+            else:
+                actie = argmax(self.lees_Q_tabel(begin_toestand))
+            if actie != 0:
+                actie_log.append((self.dag_nummer, "{:04b}".format(actie)))
+
             beloning = self.doe_actie(actie)
             volgende_toestand = self.codeer_toestand()
             self.werk_Q_tabel_bij(begin_toestand, actie, volgende_toestand, beloning)
@@ -116,7 +100,7 @@ class QLearning():
             tic = perf_counter()
             iteraties, actie_log = self.train_episode()
             if self.model.totaal.blijheid > -700:
-                print(actie_log, self.model.totaal.blijheid)
+                print("{} {:.2f}".format(actie_log, self.model.totaal.blijheid))
             duur = perf_counter() - tic
             status = status_string.format(i, iteraties, self.model.totaal.blijheid, len(self._q_tabel), duur)
             #print(status)
